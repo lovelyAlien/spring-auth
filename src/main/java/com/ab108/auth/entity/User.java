@@ -33,12 +33,16 @@ public class User {
   @Column(nullable = false)
   private boolean active;
 
+  @Enumerated(EnumType.STRING)
+  private Authority authority;
+
   // @Builder를 사용할 수 있도록 매개변수 생성자 추가
   @Builder
-  public User(String email, String password, String username) {
+  public User(String email, String password, String username, Authority authority) {
     this.email = email;
     this.password = password;
     this.username = username;
+    this.authority = authority;
   }
 
   // 엔티티가 처음 저장될 때 자동으로 값 설정
