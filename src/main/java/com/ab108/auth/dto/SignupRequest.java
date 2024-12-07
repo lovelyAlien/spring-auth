@@ -4,8 +4,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class SignupRequest {
 
   @NotBlank(message = "Email is required")
@@ -18,10 +20,6 @@ public class SignupRequest {
 
   @NotBlank(message = "Username is required")
   private String username;
-
-  // Default constructor
-  public SignupRequest() {
-  }
 
   // Parameterized constructor
   public SignupRequest(String email, String password, String username) {

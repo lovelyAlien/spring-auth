@@ -11,10 +11,6 @@ public class SignupResponse {
   private String email;
   private LocalDateTime createdAt;
 
-  // 기본 생성자 (필수, JSON 매핑 시 필요)
-  public SignupResponse() {
-  }
-
   // 매개변수 생성자
   public SignupResponse(String username, String email, LocalDateTime createdAt) {
     this.username = username;

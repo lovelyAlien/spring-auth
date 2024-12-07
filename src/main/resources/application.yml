@@ -16,3 +16,7 @@ spring:
       ddl-auto: create
     show-sql: true
 
+jwt:
+  secret: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
+  expiration_time: 3600000
+
