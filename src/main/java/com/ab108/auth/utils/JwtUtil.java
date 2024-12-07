@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -16,6 +18,8 @@ public class JwtUtil {
 
   private final Key key;
   private final long accessTokenExpTime;
+  // 블랙리스트 저장소
+  private final Map<String, Long> blacklist = new ConcurrentHashMap<>();
 
   public JwtUtil(
     @Value("${jwt.secret}") String secretKey,
@@ -101,4 +105,32 @@ public class JwtUtil {
   }
 
 
+  /**
+   * 블랙리스트에 토큰 추가
+   * @param token 토큰
+   * @param expirationTime 만료 시간 (UNIX 타임스탬프)
+   */
+  public void addToBlacklist(String token, long expirationTime) {
+    blacklist.put(token, expirationTime);
+  }
+
+  /**
+   * 토큰이 블랙리스트에 있는지 확인
+   * @param token 토큰
+   * @return 블랙리스트에 있으면 true, 없으면 false
+   */
+  public boolean isBlacklisted(String token) {
+    Long expirationTime = blacklist.get(token);
+    if (expirationTime == null) {
+      return false;
+    }
+
+    // 만료 시간 확인
+    if (System.currentTimeMillis() > expirationTime) {
+      blacklist.remove(token); // 만료된 토큰은 블랙리스트에서 제거
+      return false;
+    }
+
+    return true;
+  }
 }
