@@ -37,6 +37,9 @@ public class User {
   @Column(nullable = false)
   private Authority authority;
 
+  @Column(nullable = false)
+  private LocalDateTime passwordUpdatedAt; // 비밀번호 변경 날짜
+
   // @Builder를 사용할 수 있도록 매개변수 생성자 추가
   @Builder
   public User(String email, String password, String username, Authority authority) {
@@ -52,6 +55,7 @@ public class User {
     this.createdAt = LocalDateTime.now(); // 현재 시간으로 초기화
     this.active = true; // 기본값을 활성 상태로 설정
     this.authority = Authority.ROLE_USER;
+    this.passwordUpdatedAt = LocalDateTime.now();
   }
 
   @Override

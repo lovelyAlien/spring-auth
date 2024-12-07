@@ -4,6 +4,7 @@ import com.ab108.auth.dto.SignupRequest;
 import com.ab108.auth.entity.Authority;
 import com.ab108.auth.entity.User;
 import com.ab108.auth.entity.UserLog;
+import com.ab108.auth.exception.UnauthorizedException;
 import com.ab108.auth.repository.UserLogRepository;
 import com.ab108.auth.repository.UserRepository;
 import com.ab108.auth.utils.JwtUtil;
@@ -48,34 +49,26 @@ public class UserService {
   public String login(String email, String password) {
     User user = userRepository.findUserByEmail(email);
     if(user == null) {
-      userLogRepository.save(new UserLog(
-        null,
-        "LOGIN_FAILURE",
-        LocalDateTime.now(),
-        "이메일이 존재하지 않습니다."
-      ));
-
+      saveUserLog(null, "LOGIN_FAILURE", "이메일이 존재하지 않습니다.");
       throw new UsernameNotFoundException("이메일이 존재하지 않습니다.");
+    }
+
+    // 비밀번호 설정 90일 만료 조건 확인
+    if (isPasswordExpired(user)) {
+      saveUserLog(user, "LOGIN_FAILURE", "비밀번호가 만료되었습니다.");
+      jwtUtil.expireUserTokens(user.getId()); // 기존 토큰 무효화
+      throw new UnauthorizedException("비밀번호가 만료되었습니다. 비밀번호를 변경해주세요.");
     }
 
     // 암호화된 password를 디코딩한 값과 입력한 패스워드 값이 다르면 null 반환
     if(!passwordEncoder.matches(password, user.getPassword())) {
-      userLogRepository.save(new UserLog(
-        user,
-        "LOGIN_FAILURE",
-        LocalDateTime.now(),
-        "비밀번호가 일치하지 않습니다."
-      ));
+      saveUserLog(user, "LOGIN_FAILURE", "비밀번호가 일치하지 않습니다.");
       throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
     }
 
     String accessToken = jwtUtil.createAccessToken(user.getEmail(), user.getAuthority());
-    userLogRepository.save(new UserLog(
-      user,
-      "LOGIN_SUCCESS",
-      LocalDateTime.now(),
-      "로그인 성공"
-    ));
+    saveUserLog(user, "LOGIN_SUCCESS", "로그인 성공");
+
     return accessToken;
   }
 
@@ -99,11 +92,20 @@ public class UserService {
     jwtUtil.addToBlacklist(token, expirationTime);
 
     // 로그아웃 기록 저장
+    saveUserLog(user, "LOGOUT", "로그아웃 성공");
+  }
+
+  private void saveUserLog(User user, String logType, String message) {
     userLogRepository.save(new UserLog(
       user,
-      "LOGOUT",
+      logType,
       LocalDateTime.now(),
-      "로그아웃 성공"
+      message
     ));
+  }
+
+  private boolean isPasswordExpired(User user) {
+    LocalDateTime passwordUpdatedAt = user.getPasswordUpdatedAt();
+    return passwordUpdatedAt.isBefore(LocalDateTime.now().minusDays(90));
   }
 }
