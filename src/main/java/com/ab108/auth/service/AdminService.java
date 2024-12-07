@@ -9,12 +9,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
-public class UserLogService {
+public class AdminService {
 
   private final UserLogRepository userLogRepository;
+
+  private final Map<Long, Long> invalidateTimestamps = new ConcurrentHashMap<>();
 
   public Page<UserLogResponse> getUserLogs(Long userId, LocalDateTime startDate, LocalDateTime endDate, String logType, Pageable pageable) {
     Page<UserLog> logs = userLogRepository.findLogsByFilters(userId, startDate, endDate, logType, pageable);
@@ -24,5 +28,10 @@ public class UserLogService {
       log.getTimestamp(),
       log.getMessage()
     ));
+  }
+
+  public void expireUserTokens(Long userId) {
+    // 현재 시점을 무효화 기준 시점으로 설정
+    invalidateTimestamps.put(userId, System.currentTimeMillis());
   }
 }

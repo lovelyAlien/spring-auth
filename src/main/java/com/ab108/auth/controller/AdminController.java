@@ -1,12 +1,13 @@
 package com.ab108.auth.controller;
 
 import com.ab108.auth.dto.UserLogResponse;
-import com.ab108.auth.service.UserLogService;
+import com.ab108.auth.service.AdminService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AdminController {
 
-  private final UserLogService userLogService;
+  private final AdminService adminService;
 
   @GetMapping("/{userId}/logs")
   public Page<UserLogResponse> getUserLogs(
@@ -31,7 +32,17 @@ public class AdminController {
     LocalDateTime end = (endDate != null) ? LocalDateTime.parse(endDate) : null;
     Pageable pageable = PageRequest.of(page, size);
 
-    return userLogService.getUserLogs(userId, start, end, logType, pageable);
+    return adminService.getUserLogs(userId, start, end, logType, pageable);
+  }
+
+  @PostMapping("/{userId}/expire-tokens")
+  public ResponseEntity<?> expireUserTokens(@PathVariable Long userId) {
+    try {
+      adminService.expireUserTokens(userId);
+      return ResponseEntity.ok("{\"message\": \"User tokens expired successfully\"}");
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+    }
   }
 }
 
