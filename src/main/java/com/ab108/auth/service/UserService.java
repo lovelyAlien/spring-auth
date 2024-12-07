@@ -1,11 +1,14 @@
 package com.ab108.auth.service;
 
+import com.ab108.auth.dto.SignupRequest;
+import com.ab108.auth.entity.Authority;
 import com.ab108.auth.entity.User;
 import com.ab108.auth.entity.UserLog;
 import com.ab108.auth.repository.UserLogRepository;
 import com.ab108.auth.repository.UserRepository;
 import com.ab108.auth.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,6 +25,25 @@ public class UserService {
   private final UserLogRepository userLogRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
+
+  /**
+   * 회원가입 처리
+   */
+  public User signup(SignupRequest request) {
+    if (userRepository.existsByEmail(request.getEmail())) {
+      throw new IllegalArgumentException("Email already exists");
+    }
+
+    String hashedPassword = passwordEncoder.encode(request.getPassword());
+
+    User user = User.builder()
+      .email(request.getEmail())
+      .password(hashedPassword)
+      .username(request.getUsername())
+      .build();
+
+    return userRepository.save(user);
+  }
 
   public String login(String email, String password) {
     User user = userRepository.findUserByEmail(email);
@@ -57,7 +79,8 @@ public class UserService {
     return accessToken;
   }
 
-  public void logout(String token) {
+  public void logout(HttpServletRequest request) {
+    String token = jwtUtil.resolveToken(request);
     if(token == null || jwtUtil.isBlacklisted(token)) {
       throw new IllegalArgumentException("Invalid or expired token");
     }

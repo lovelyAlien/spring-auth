@@ -34,6 +34,7 @@ public class User {
   private boolean active;
 
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private Authority authority;
 
   // @Builder를 사용할 수 있도록 매개변수 생성자 추가
@@ -50,6 +51,7 @@ public class User {
   protected void onCreate() {
     this.createdAt = LocalDateTime.now(); // 현재 시간으로 초기화
     this.active = true; // 기본값을 활성 상태로 설정
+    this.authority = Authority.ROLE_USER;
   }
 
   @Override
@@ -60,6 +62,7 @@ public class User {
       ", username='" + username + '\'' +
       ", createdAt=" + createdAt +
       ", active=" + active +
+      ", authority=" + authority.name() +
       '}';
   }
 }

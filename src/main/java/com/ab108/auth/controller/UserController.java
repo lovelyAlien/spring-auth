@@ -28,19 +28,12 @@ public class UserController {
 
   @PostMapping("/signup")
   public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
-
-    if (userRepository.existsByEmail(request.getEmail())) {
-      return ResponseEntity.badRequest().body("Email already exists");
+    try {
+      User user = userService.signup(request);
+      return ResponseEntity.ok(new SignupResponse(user.getUsername(), user.getEmail(), user.getCreatedAt()));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
     }
-    String hashedPassword = passwordEncoder.encode(request.getPassword());
-    User user = User.builder()
-      .email(request.getEmail())
-      .password(hashedPassword)
-      .username(request.getUsername())
-      .build();
-
-    userRepository.save(user);
-    return ResponseEntity.ok(new SignupResponse(user.getUsername(), user.getEmail(), user.getCreatedAt()));
   }
 
   @PostMapping("/signin")
@@ -58,21 +51,11 @@ public class UserController {
 
   @PostMapping("/logout")
   public ResponseEntity<?> logout(HttpServletRequest request) {
-    String token = extractToken(request);
-
     try {
-      userService.logout(token);
+      userService.logout(request);
       return ResponseEntity.ok("Successfully logged out");
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
     }
-  }
-
-  private String extractToken(HttpServletRequest request) {
-    String bearerToken = request.getHeader("Authorization");
-    if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-      return bearerToken.substring(7);
-    }
-    return null;
   }
 }
