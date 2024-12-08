@@ -125,8 +125,7 @@ public class JwtUtil {
       }
 
       // 무효화 기준 시점 이후 발급된 토큰인지 확인
-      Long invalidateTimestamp = invalidateTimestamps.get(user.getId());
-      if (invalidateTimestamp != null && parseClaims(token).getIssuedAt().getTime() < invalidateTimestamp) {
+      if (isTokenInvalidated(user.getId(), parseClaims(token).getIssuedAt())) {
         throw new IllegalArgumentException("Token issued before invalidate timestamp");
       }
 
@@ -195,5 +194,10 @@ public class JwtUtil {
   public void expireUserTokens(Long userId) {
     // 현재 시점을 무효화 기준 시점으로 설정
     invalidateTimestamps.put(userId, System.currentTimeMillis());
+  }
+
+  public boolean isTokenInvalidated(Long userId, Date issuedAt) {
+    Long invalidateTimestamp = invalidateTimestamps.get(userId);
+    return invalidateTimestamp != null && issuedAt.getTime() < invalidateTimestamp;
   }
 }

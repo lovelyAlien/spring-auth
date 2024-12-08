@@ -41,6 +41,10 @@ public class UserService {
       .email(request.getEmail())
       .password(hashedPassword)
       .username(request.getUsername())
+      .active(true)
+      .authority(Authority.ROLE_USER)
+      .createdAt(LocalDateTime.now())
+      .passwordUpdatedAt(LocalDateTime.now())
       .build();
 
     return userRepository.save(user);
